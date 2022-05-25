@@ -13,8 +13,12 @@ type Controller struct {
 	Renderer  *Renderer
 	GameBoard *GameBoard
 
-	exitFlag  bool
-	inputLock bool
+	difficulty int
+	exitFlag   bool
+	inputLock  bool
+	lastKey    int
+	keys       map[int]bool
+	frames     int
 }
 
 func NewController(width int32, height int32, fontPath string, fontSize int, windowTitle string) *Controller {
@@ -22,7 +26,14 @@ func NewController(width int32, height int32, fontPath string, fontSize int, win
 		Renderer:  NewRenderer(width, height, fontPath, fontSize, windowTitle),
 		GameBoard: NewGameBoard(64, 48),
 
-		exitFlag: false,
+		difficulty: 32,
+		exitFlag:   false,
+		lastKey:    sdl.K_RIGHT,
+		keys:       make(map[int]bool),
+	}
+
+	for _, i := range []int{sdl.K_LEFT, sdl.K_RIGHT, sdl.K_DOWN, sdl.K_UP} {
+		controller.keys[i] = true
 	}
 
 	gameTitle = windowTitle
@@ -48,9 +59,21 @@ func (controller *Controller) Update() {
 			if !controller.inputLock {
 				if t.Keysym.Sym == sdl.K_r { // Reset game.
 					fmt.Println("Reseting game...")
-					controller.GameBoard = NewGameBoard(4*10, 3*10)
+					controller.GameBoard = NewGameBoard(64, 48)
+					controller.lastKey = sdl.K_RIGHT
+					// Add game difficulty
+				} else if t.Keysym.Sym == sdl.K_EQUALS {
+					if controller.difficulty != 1 {
+						controller.difficulty /= 2
+					}
+				} else if t.Keysym.Sym == sdl.K_MINUS {
+					if controller.difficulty < 256 {
+						controller.difficulty *= 2
+					}
 				} else {
-					controller.GameBoard.Update(t.Keysym.Sym)
+					if controller.keys[int(t.Keysym.Sym)] {
+						controller.lastKey = int(t.Keysym.Sym)
+					}
 				}
 			}
 
@@ -69,6 +92,10 @@ func (controller *Controller) Update() {
 		}
 	}
 
+	if controller.frames%controller.difficulty == 0 {
+		controller.GameBoard.Update(sdl.Keycode(controller.lastKey))
+	}
+
 	controller.Renderer.Update(*controller.GameBoard)
 
 	controller.exitFlag = false
@@ -76,18 +103,18 @@ func (controller *Controller) Update() {
 
 func (controller *Controller) Start() {
 	startTime := time.Now()
-	passedTime := time.Now().Sub(startTime).Microseconds()
+	passedTime := time.Since(startTime)
 
 	controller.Update()
 	// Update the game by difficulty...
 	for !controller.exitFlag {
 		startTime = time.Now()
-		if passedTime > time.Microsecond.Microseconds() {
-			// fmt.Println(passedTime)
-			controller.Update()
-			startTime = time.Now()
-			passedTime = 0
+		controller.Update()
+		passedTime = time.Since(startTime)
+		// lock 60fps
+		if passedTime < time.Duration(time.Second.Nanoseconds()/60) {
+			time.Sleep(time.Duration(time.Second.Nanoseconds()/60) - passedTime)
 		}
-		passedTime += time.Now().Sub(startTime).Microseconds()
+		controller.frames = (controller.frames + 1) % 360
 	}
 }

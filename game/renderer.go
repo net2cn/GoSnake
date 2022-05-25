@@ -125,26 +125,30 @@ func (renderer *Renderer) drawPartialSprite(dstX int, dstY int, sprite *sdl.Surf
 func (renderer *Renderer) Update(gameBoard GameBoard) {
 	// Render game.
 	// 0xAARRGGBB
-	// turningSnake := make([]([2]int), 0)
-	// turningSnake = append(turningSnake, gameBoard.Snake[0])
-
-	// lastDirection := [2]int{int(math.Abs(float64(gameBoard.Snake[0][0] - gameBoard.Snake[1][0]))), int(math.Abs(float64(gameBoard.Snake[0][1] - gameBoard.Snake[1][1])))}
-	// lastSnake := gameBoard.Snake[1]
-
-	// for _, i := range gameBoard.Snake[2:] {
-	// 	direction := [2]int{int(math.Abs(float64(i[0] - lastSnake[0]))), int(math.Abs(float64(i[1] - lastSnake[1])))}
-	// 	if lastDirection != direction {
-	// 		turningSnake = append(turningSnake, i)
-	// 	}
-	// 	lastDirection = direction
-	// 	lastSnake = i
-	// }
 	scale := renderer.buffer.W / int32(gameBoard.Width)
+	var border int32 = 2
 
-	for _, i := range gameBoard.Snake {
-		renderer.buffer.FillRect(&sdl.Rect{X: int32(i[0]) * scale, Y: int32(i[1]) * scale, W: scale, H: scale}, 0xFFFFFFFF)
+	// Draw snake.
+	lastSnake := [2]int{0, 0}
+	for idx, i := range gameBoard.Snake {
+		// Fill the gap
+		if idx == 0 {
+			renderer.buffer.FillRect(&sdl.Rect{X: int32(i[0])*scale + border, Y: int32(i[1])*scale + border, W: scale - border*2, H: scale - border*2}, 0xFFFFFFFF)
+		} else {
+			if Abs(i[0]-lastSnake[0]) >= gameBoard.Width-1 || Abs(i[1]-lastSnake[1]) >= gameBoard.Height-1 {
+				renderer.buffer.FillRect(&sdl.Rect{X: int32(i[0])*scale + border, Y: int32(i[1])*scale + border, W: scale - border*2, H: scale - border*2}, 0xFFFFFFFF)
+			} else {
+				minX := Min(i[0], lastSnake[0])
+				minY := Min(i[1], lastSnake[1])
+				maxX := Max(i[0], lastSnake[0])
+				maxY := Max(i[1], lastSnake[1])
+				renderer.buffer.FillRect(&sdl.Rect{X: int32(minX)*scale + border, Y: int32(minY)*scale + border, W: scale*int32(maxX-minX+1) - 2*border, H: scale*int32(maxY-minY+1) - 2*border}, 0xFFFFFFFF)
+			}
+		}
+		lastSnake = i
 	}
 
+	// Draw food.
 	renderer.buffer.FillRect(&sdl.Rect{X: int32(gameBoard.Food[0]) * scale, Y: int32(gameBoard.Food[1]) * scale, W: scale, H: scale}, 0xFFFFFFFF)
 
 	// Swap buffer and present our rendered content.

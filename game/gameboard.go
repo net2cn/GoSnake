@@ -58,15 +58,19 @@ func (gameBoard *GameBoard) generateNewFood() {
 
 func (gameBoard *GameBoard) move(tile [2]int) {
 	hadFood := false
-	nextTile := [2]int{(2*gameBoard.Snake[len(gameBoard.Snake)-1][0] - gameBoard.Snake[len(gameBoard.Snake)-2][0]) % gameBoard.Width,
-		(2*gameBoard.Snake[len(gameBoard.Snake)-1][1] - gameBoard.Snake[len(gameBoard.Snake)-2][1]) % gameBoard.Height}
+	nextTile := [2]int{(gameBoard.Snake[len(gameBoard.Snake)-1][0] + tile[0]) % gameBoard.Width, (gameBoard.Snake[len(gameBoard.Snake)-1][1] + tile[1]) % gameBoard.Height}
 
-	if tile != [2]int{0, 0} {
-		inputTile := [2]int{(gameBoard.Snake[len(gameBoard.Snake)-1][0] + tile[0]) % gameBoard.Width, (gameBoard.Snake[len(gameBoard.Snake)-1][1] + tile[1]) % gameBoard.Height}
-		// Check if user input is valid (not going backwards)
-		if inputTile != gameBoard.Snake[len(gameBoard.Snake)-2] {
-			nextTile = inputTile
-		}
+	if nextTile == gameBoard.Snake[len(gameBoard.Snake)-2] {
+		tile[0] = -tile[0]
+		tile[1] = -tile[1]
+		nextTile = [2]int{(gameBoard.Snake[len(gameBoard.Snake)-1][0] + tile[0]) % gameBoard.Width, (gameBoard.Snake[len(gameBoard.Snake)-1][1] + tile[1]) % gameBoard.Height}
+	}
+
+	if nextTile[0] < 0 {
+		nextTile[0] = gameBoard.Width - 1
+	}
+	if nextTile[1] < 0 {
+		nextTile[1] = gameBoard.Height - 1
 	}
 
 	// Next tile is snake
@@ -78,7 +82,7 @@ func (gameBoard *GameBoard) move(tile [2]int) {
 
 	// Next tile is food
 	if nextTile == gameBoard.Food {
-		gameBoard.Snake = append(gameBoard.Snake, nextTile)
+		gameBoard.Snake = append([][2]int{nextTile}, gameBoard.Snake...)
 		gameBoard.GameScore++
 		gameBoard.generateNewFood()
 		hadFood = true
@@ -89,8 +93,6 @@ func (gameBoard *GameBoard) move(tile [2]int) {
 	// Pop the tail if no food is consumed.
 	// Otherwise the length of the snake will automatically increase 1.
 	gameBoard.Snake = gameBoard.Snake[1:]
-
-	fmt.Println(gameBoard.Snake)
 }
 
 func (gameBoard *GameBoard) Update(keyState sdl.Keycode) {
