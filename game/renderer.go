@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -128,6 +129,22 @@ func (renderer *Renderer) Update(gameBoard GameBoard) {
 	scale := renderer.buffer.W / int32(gameBoard.Width)
 	var border int32 = 2
 
+	// Draw background outline
+	renderer.buffer.FillRect(&sdl.Rect{0, 0, 640, 480}, 0xFFFFFFFF)
+	renderer.buffer.FillRect(&sdl.Rect{2, 2, 636, 476}, 0x00000000)
+
+	// Draw key hints.
+	anchor := 485
+	renderer.drawString(5, anchor, "GoSnake", &sdl.Color{255, 255, 255, 0})
+	renderer.drawString(5, anchor+40, "Controls:", &sdl.Color{255, 255, 255, 0})
+	renderer.drawString(5, anchor+60, "Arrow Keys: Move around:", &sdl.Color{255, 255, 255, 0})
+	renderer.drawString(5, anchor+80, "-=: Adjust Game Difficulty(-: Easier, +: Harder):", &sdl.Color{255, 255, 255, 0})
+	renderer.drawString(5, anchor+100, "R: Restart Game:", &sdl.Color{255, 255, 255, 0})
+	renderer.drawString(5, anchor+120, "Esc: Exit Game:", &sdl.Color{255, 255, 255, 0})
+
+	// Draw score
+	renderer.drawString(480, 485, "Score: "+strconv.Itoa((len(gameBoard.Snake)-3)*10), &sdl.Color{255, 255, 255, 0})
+
 	// Draw snake.
 	lastSnake := [2]int{0, 0}
 	for idx, i := range gameBoard.Snake {
@@ -150,6 +167,13 @@ func (renderer *Renderer) Update(gameBoard GameBoard) {
 
 	// Draw food.
 	renderer.buffer.FillRect(&sdl.Rect{X: int32(gameBoard.Food[0]) * scale, Y: int32(gameBoard.Food[1]) * scale, W: scale, H: scale}, 0xFFFFFFFF)
+
+	// If player wins...
+	if gameBoard.GameWin {
+		renderer.buffer.FillRect(&sdl.Rect{160, 220, 320, 80}, 0xFFFFFFFF)
+		renderer.drawString(280, 240, "You Won!", &sdl.Color{0, 0, 0, 0})
+		renderer.drawString(200, 260, "The snake is long enough!", &sdl.Color{0, 0, 0, 0})
+	}
 
 	// Swap buffer and present our rendered content.
 	renderer.window.UpdateSurface()

@@ -3,20 +3,21 @@ Yet another snake game implemented in golang with [go-sdl2](https://github.com/v
 
 ---
 
-## Control
-↑↓←→: Move around
-
--=: Adjust Game Difficulty(-: Easier, +: Harder)
-
-R: Restart Game
-
-Esc: Exit Game
-
 ## Screenshots
-![screenshot](./assets/screenshot_2022-05-25_164445.png)
+![screenshot](./assets/screenshot_2022-05-26_161125.png)
 
 ## Build
-To do here.
+Install [go-sdl2](https://github.com/veandco/go-sdl2). After that simply type
+```
+go build main.go
+```
+and you'll get your game binary.
+
+If you need the game to be built statically for redistribution, use the following line:
+```
+go build -tags static -ldflags "-s -w -H=windowsgui"
+```
+This will also get rid of the debug console. Remove "-H=windowsgui" if you need it.
 
 ---
 

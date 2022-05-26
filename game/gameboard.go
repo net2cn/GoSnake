@@ -15,6 +15,7 @@ type GameBoard struct {
 	Height int
 
 	GameScore    int
+	GameWin      bool
 	GameOverFlag bool
 }
 
@@ -96,6 +97,10 @@ func (gameBoard *GameBoard) move(tile [2]int) {
 }
 
 func (gameBoard *GameBoard) Update(keyState sdl.Keycode) {
+	if gameBoard.GameWin {
+		return
+	}
+
 	var input [2]int
 
 	switch keyState {
@@ -113,7 +118,12 @@ func (gameBoard *GameBoard) Update(keyState sdl.Keycode) {
 		input = [2]int{0, 1}
 	}
 
-	if gameBoard.GameOverFlag != true {
+	if len(gameBoard.Snake) == gameBoard.Height*gameBoard.Width {
+		gameBoard.GameWin = true
+		fmt.Println("You Win! There is no more tiles for you to go!")
+	}
+
+	if !gameBoard.GameOverFlag {
 		gameBoard.move(input)
 	} else {
 		fmt.Println("Game over!")
